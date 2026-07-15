@@ -2,24 +2,15 @@
 
 import { useState, useEffect } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import {
-  FileText,
-  CheckCircle2,
-  AlertCircle,
-  Upload,
-  UserCheck,
+  Clock,
+  Sparkles,
   Phone,
   MessageSquare,
-  Clock,
-  ChevronRight,
-  Sparkles,
-  RefreshCw,
-  Eye,
-  Trash2,
-  FileCheck,
   Check,
-  Shield
+  Building
 } from "lucide-react";
 
 interface Step {
@@ -32,8 +23,7 @@ interface Step {
 }
 
 export default function ClientDashboard() {
-  // State for the Progress Tracker steps
-  const [currentStepId, setCurrentStepId] = useState(1); // 1 = Submission, 2 = Review, 3 = Embassy, 4 = Finalized
+  const [currentStepId, setCurrentStepId] = useState(1);
   const [activePopover, setActivePopover] = useState<number | null>(null);
   const [clientRecord, setClientRecord] = useState<any>(null);
 
@@ -52,29 +42,6 @@ export default function ClientDashboard() {
             if (record) {
               setClientRecord(record);
               setCurrentStepId(record.activeStep);
-              
-              if (record.passportStatus && record.passportStatus !== "Pending") {
-                setPassportFile({
-                  name: "passport_scan.jpg",
-                  size: "2.4 MB",
-                  status: record.passportStatus
-                });
-                if (record.passportStatus === "Approved") {
-                  setScannedData({
-                    name: record.name.toUpperCase(),
-                    num: "PC9283401",
-                    exp: "2031-10-12"
-                  });
-                }
-              }
-
-              if (record.inviteStatus && record.inviteStatus !== "Pending") {
-                setInviteFile({
-                  name: "invitation_letter.pdf",
-                  size: "1.2 MB",
-                  status: record.inviteStatus
-                });
-              }
             }
           }
         } catch (err) {
@@ -121,142 +88,9 @@ export default function ClientDashboard() {
     }
   ];
 
-  // Document states
-  const [passportFile, setPassportFile] = useState<{ name: string; size: string; status: string } | null>(null);
-  const [passportUploading, setPassportUploading] = useState(false);
-  const [passportScanning, setPassportScanning] = useState(false);
-  const [passportProgress, setPassportProgress] = useState(0);
-  const [scannedData, setScannedData] = useState<{ name: string; num: string; exp: string } | null>(null);
-
-  const [inviteFile, setInviteFile] = useState<{ name: string; size: string; status: string } | null>(null);
-  const [inviteUploading, setInviteUploading] = useState(false);
-  const [inviteProgress, setInviteProgress] = useState(0);
-
-  const [extraFile, setExtraFile] = useState<{ name: string; size: string; status: string } | null>(null);
-  const [extraUploading, setExtraUploading] = useState(false);
-  const [extraProgress, setExtraProgress] = useState(0);
-
-  // Simulated passport upload & OCR trigger
-  const handlePassportUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-    
-    setPassportUploading(true);
-    setPassportProgress(0);
-    setPassportFile(null);
-    setScannedData(null);
-
-    // Simulate progress upload
-    const interval = setInterval(() => {
-      setPassportProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setPassportUploading(false);
-          // Trigger OCR scanning effect
-          triggerOCRScan(file.name);
-          return 100;
-        }
-        return prev + 10;
-      });
-    }, 150);
-  };
-
-  const triggerOCRScan = (fileName: string) => {
-    setPassportScanning(true);
-    setTimeout(async () => {
-      setPassportScanning(false);
-      setPassportFile({
-        name: fileName,
-        size: "1.8 MB",
-        status: "Uploaded"
-      });
-      setScannedData({
-        name: clientRecord?.name?.toUpperCase() || "JOHN DOE",
-        num: "PC9283401",
-        exp: "2031-10-12"
-      });
-
-      // Update document upload flag in Supabase
-      if (clientRecord) {
-        try {
-          await fetch("/api/clients", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({ id: clientRecord.id, passportStatus: "Uploaded" }),
-          });
-        } catch (err) {
-          console.error("Error updating passport status:", err);
-        }
-      }
-    }, 2500); // 2.5 seconds of futuristic scanning line animation
-  };
-
-  // Mock Invite letter upload
-  const handleInviteUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-
-    setInviteUploading(true);
-    setInviteProgress(0);
-
-    const interval = setInterval(() => {
-      setInviteProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setInviteUploading(false);
-          setInviteFile({
-            name: file.name,
-            size: "720 KB",
-            status: "Uploaded"
-          });
-
-          // Update document upload flag in Supabase
-          if (clientRecord) {
-            fetch("/api/clients", {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-              },
-              body: JSON.stringify({ id: clientRecord.id, inviteStatus: "Uploaded" }),
-            }).catch((err) => console.error("Error updating invite status:", err));
-          }
-          return 100;
-        }
-        return prev + 20;
-      });
-    }, 100);
-  };
-
-  // Mock Extra details upload
-  const handleExtraUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files || e.target.files.length === 0) return;
-    const file = e.target.files[0];
-
-    setExtraUploading(true);
-    setExtraProgress(0);
-
-    const interval = setInterval(() => {
-      setExtraProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
-          setExtraUploading(false);
-          setExtraFile({
-            name: file.name,
-            size: "1.1 MB",
-            status: "Submitted"
-          });
-          return 100;
-        }
-        return prev + 25;
-      });
-    }, 100);
-  };
-
   return (
     <div className="grid md:grid-cols-12 gap-8 text-brand-navy dark:text-slate-100">
-      {/* LEFT PORTION: main tracker and document vault */}
+      {/* LEFT PORTION: main tracker */}
       <div className="md:col-span-8 space-y-8">
         
         {/* Welcome VIP client header */}
@@ -275,61 +109,35 @@ export default function ClientDashboard() {
 
         {/* PROGRESS TRACKER CANVAS */}
         <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-brand-navy/15 dark:border-slate-800 shadow-sm dark:shadow-none relative">
-          
-
           <h3 className="font-extrabold text-lg tracking-tight mb-8">Consular Protocol Timeline</h3>
 
           {/* Progress sequence bar */}
           <div className="relative flex flex-col md:flex-row justify-between items-start md:items-center gap-8 md:gap-4 mt-4">
-            
-            {/* Horizontal line divider behind steps */}
+            {/* progress line background */}
             <div className="absolute top-1/2 left-4 right-4 h-0.5 bg-brand-gray-light dark:bg-slate-850 -translate-y-1/2 z-0 hidden md:block" />
-            
+
             {steps.map((step) => {
-              const isActive = step.status === "active";
               const isCompleted = step.status === "completed";
+              const isActive = step.status === "active";
               
               return (
-                <div key={step.id} className="relative z-10 flex-1 w-full">
-                  <div
+                <div key={step.id} className="relative z-10 flex flex-row md:flex-col items-center gap-4 md:gap-2 flex-1 w-full md:w-auto">
+                  <button
                     onClick={() => setActivePopover(activePopover === step.id ? null : step.id)}
-                    className="flex md:flex-col items-center gap-4 md:gap-2 text-center cursor-pointer group"
+                    className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm transition-all duration-350 cursor-pointer ${
+                      isCompleted
+                        ? "bg-green-500 text-white shadow-[0_0_12px_rgba(34,197,94,0.3)]"
+                        : isActive
+                        ? "bg-brand-navy text-white dark:bg-brand-gold dark:text-brand-navy border-2 border-brand-gold animate-pulse glow-gold"
+                        : "bg-brand-gray-light dark:bg-slate-850 text-text-muted dark:text-slate-500 border border-brand-navy/5 dark:border-slate-800"
+                    }`}
                   >
-                    {/* Circle Indicator */}
-                    <div className="relative">
-                      {isActive && (
-                        <motion.div
-                          layoutId="pulsing-glow"
-                          className="absolute inset-[-6px] rounded-full bg-brand-gold/30 border border-brand-gold/50 z-0"
-                          animate={{ scale: [1, 1.2, 1] }}
-                          transition={{ repeat: Infinity, duration: 1.8 }}
-                        />
-                      )}
-                      
-                      <div
-                        className={`w-10 h-10 rounded-full flex items-center justify-center font-bold text-sm border-2 relative z-10 transition-all duration-300 ${
-                          isCompleted
-                            ? "bg-brand-gold border-brand-gold text-brand-navy dark:text-slate-100 shadow-sm dark:shadow-none"
-                            : isActive
-                            ? "bg-white dark:bg-slate-900 border-brand-gold text-brand-gold scale-105"
-                            : "bg-white dark:bg-slate-900 border-brand-navy/15 dark:border-slate-800 text-brand-navy dark:text-slate-100/30"
-                        }`}
-                      >
-                        {isCompleted ? <Check className="w-5 h-5 stroke-[3]" /> : step.id}
-                      </div>
-                    </div>
+                    {isCompleted ? <Check className="w-5 h-5" /> : step.id}
+                  </button>
 
-                    {/* Step Labels */}
-                    <div className="flex flex-col text-left md:text-center">
-                      <span className={`text-sm font-extrabold transition-colors ${
-                        isCompleted || isActive ? "text-brand-navy dark:text-slate-100" : "text-brand-navy dark:text-slate-100/40"
-                      }`}>
-                        {step.label}
-                      </span>
-                      <span className="text-[11px] text-text-muted dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">
-                        {step.sublabel}
-                      </span>
-                    </div>
+                  <div className="text-left md:text-center">
+                    <p className={`text-xs font-bold ${isActive ? "text-brand-gold" : "text-brand-navy dark:text-slate-100"}`}>{step.label}</p>
+                    <p className="text-[10px] text-text-muted dark:text-slate-400 font-semibold mt-0.5">{step.sublabel}</p>
                   </div>
 
                   {/* Popover detailed info bubble */}
@@ -364,259 +172,9 @@ export default function ClientDashboard() {
             <p className="hidden sm:block">Agent assigned: <span className="text-brand-navy dark:text-slate-100 font-bold">Keza A.</span></p>
           </div>
         </div>
-
-        {/* SECURE DOCUMENT VAULT */}
-        <div id="vault" className="space-y-4">
-          <div className="flex justify-between items-center">
-            <h3 className="font-extrabold text-lg tracking-tight">Secure Document Vault</h3>
-            <span className="text-xs font-semibold text-text-muted dark:text-slate-400 flex items-center gap-1.5">
-              <Shield className="w-4 h-4 text-brand-gold" />
-              AES-256 Cloud Encryption Active
-            </span>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            
-            {/* CARD A: Passport Bio Page */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-brand-navy/10 dark:border-slate-800 hover:border-brand-gold transition-all duration-300 relative overflow-hidden flex flex-col justify-between">
-              
-              {/* Scanline overlay animations when scanning */}
-              <AnimatePresence>
-                {passportScanning && (
-                  <div className="absolute inset-0 bg-brand-navy/5 z-20 pointer-events-none">
-                    <motion.div
-                      animate={{ y: ["0%", "100%", "0%"] }}
-                      transition={{ repeat: Infinity, duration: 2, ease: "linear" }}
-                      className="w-full h-1 bg-brand-gold shadow-[0_0_12px_#d4af37]"
-                    />
-                  </div>
-                )}
-              </AnimatePresence>
-
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="px-2.5 py-1 bg-brand-gold/10 text-brand-navy dark:text-slate-100 font-bold text-[10px] uppercase tracking-wider rounded">
-                    High Priority
-                  </div>
-                  {passportFile && (
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-green-600">
-                      <FileCheck className="w-3.5 h-3.5" /> Scanned
-                    </span>
-                  )}
-                </div>
-
-                <h4 className="font-extrabold text-base text-brand-navy dark:text-slate-100">Passport Bio Page</h4>
-                <p className="text-xs text-text-muted dark:text-slate-400 mt-1 leading-relaxed">
-                  Provide a clean screenshot/photo of your identification page (must be valid for at least 6 months).
-                </p>
-
-                {/* Simulated file state displays */}
-                <div className="mt-4">
-                  {passportUploading && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold text-brand-navy dark:text-slate-100">
-                        <span>Uploading passport...</span>
-                        <span>{passportProgress}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-brand-gray-light dark:bg-slate-850 rounded-full overflow-hidden">
-                        <div className="h-full bg-brand-gold transition-all" style={{ width: `${passportProgress}%` }} />
-                      </div>
-                    </div>
-                  )}
-
-                  {passportScanning && (
-                    <div className="flex items-center gap-2 p-2 bg-brand-gold/10 rounded-lg text-brand-navy dark:text-slate-100 text-xs font-semibold animate-pulse">
-                      <RefreshCw className="w-4 h-4 text-brand-gold animate-spin" />
-                      Running Futuristic OCR scan...
-                    </div>
-                  )}
-
-                  {passportFile && !passportScanning && (
-                    <div className="p-3 bg-brand-gray-light dark:bg-slate-850 rounded-lg border border-brand-navy/5 dark:border-slate-850 flex items-center justify-between text-xs">
-                      <div className="min-w-0">
-                        <p className="font-bold text-brand-navy dark:text-slate-100 truncate">{passportFile.name}</p>
-                        <p className="text-[10px] text-text-muted dark:text-slate-400 mt-0.5">{passportFile.size}</p>
-                      </div>
-                      <button
-                        onClick={() => {
-                          setPassportFile(null);
-                          setScannedData(null);
-                        }}
-                        className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-brand-navy dark:text-slate-100/40 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-
-                  {!passportFile && !passportUploading && !passportScanning && (
-                    <label className="border-2 border-dashed border-brand-navy/10 dark:border-slate-800 hover:border-brand-gold/50 rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-brand-gray-light dark:bg-slate-850/30">
-                      <Upload className="w-6 h-6 text-brand-navy dark:text-slate-100/30 mb-2 group-hover:text-brand-gold" />
-                      <span className="text-xs font-bold text-brand-navy dark:text-slate-100">Upload Passport File</span>
-                      <span className="text-[10px] text-text-muted dark:text-slate-400 mt-1">JPEG, PNG up to 5MB</span>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        onChange={handlePassportUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
-              </div>
-
-              {/* Show extracted details once scanned */}
-              {scannedData && (
-                <div className="mt-4 pt-4 border-t border-brand-navy/5 dark:border-slate-850 space-y-1.5 text-[10px] font-bold bg-brand-gold/5 p-2.5 rounded-lg border border-brand-gold/15">
-                  <p className="text-brand-gold uppercase tracking-widest text-[9px]">OCR Extracted Info</p>
-                  <div className="flex justify-between">
-                    <span className="text-text-muted dark:text-slate-400">NAME:</span>
-                    <span className="text-brand-navy dark:text-slate-100">{scannedData.name}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-text-muted dark:text-slate-400">PASSPORT NO:</span>
-                    <span className="text-brand-navy dark:text-slate-100">{scannedData.num}</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-text-muted dark:text-slate-400">EXPIRY:</span>
-                    <span className="text-brand-navy dark:text-slate-100">{scannedData.exp}</span>
-                  </div>
-                </div>
-              )}
-            </div>
-
-            {/* CARD B: Official Invitation Letter */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-brand-navy/10 dark:border-slate-800 hover:border-brand-gold transition-all duration-300 flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="px-2.5 py-1 bg-brand-navy/5 text-brand-navy dark:text-slate-100 font-bold text-[10px] uppercase tracking-wider rounded">
-                    Core Document
-                  </div>
-                  {inviteFile && (
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-brand-gold">
-                      <Clock className="w-3.5 h-3.5" /> Under Review
-                    </span>
-                  )}
-                </div>
-
-                <h4 className="font-extrabold text-base text-brand-navy dark:text-slate-100">Official Invitation Letter</h4>
-                <p className="text-xs text-text-muted dark:text-slate-400 mt-1 leading-relaxed">
-                  Provide the formal invitation correspondence from your Rwandan hosting entity or institution.
-                </p>
-
-                <div className="mt-4">
-                  {inviteUploading && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold text-brand-navy dark:text-slate-100">
-                        <span>Uploading document...</span>
-                        <span>{inviteProgress}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-brand-gray-light dark:bg-slate-850 rounded-full overflow-hidden">
-                        <div className="h-full bg-brand-navy transition-all" style={{ width: `${inviteProgress}%` }} />
-                      </div>
-                    </div>
-                  )}
-
-                  {inviteFile && (
-                    <div className="p-3 bg-brand-gray-light dark:bg-slate-850 rounded-lg border border-brand-navy/5 dark:border-slate-850 flex items-center justify-between text-xs">
-                      <div className="min-w-0">
-                        <p className="font-bold text-brand-navy dark:text-slate-100 truncate">{inviteFile.name}</p>
-                        <p className="text-[10px] text-text-muted dark:text-slate-400 mt-0.5">{inviteFile.size}</p>
-                      </div>
-                      <button
-                        onClick={() => setInviteFile(null)}
-                        className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-brand-navy dark:text-slate-100/40 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-
-                  {!inviteFile && !inviteUploading && (
-                    <label className="border-2 border-dashed border-brand-navy/10 dark:border-slate-800 hover:border-brand-gold/50 rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-brand-gray-light dark:bg-slate-850/30">
-                      <Upload className="w-6 h-6 text-brand-navy dark:text-slate-100/30 mb-2" />
-                      <span className="text-xs font-bold text-brand-navy dark:text-slate-100">Upload Invite PDF</span>
-                      <span className="text-[10px] text-text-muted dark:text-slate-400 mt-1">PDF file up to 10MB</span>
-                      <input
-                        type="file"
-                        accept=".pdf"
-                        onChange={handleInviteUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            {/* CARD C: Supporting Essentials */}
-            <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-brand-navy/10 dark:border-slate-800 hover:border-brand-gold transition-all duration-300 flex flex-col justify-between">
-              <div>
-                <div className="flex justify-between items-start mb-4">
-                  <div className="px-2.5 py-1 bg-brand-navy/5 text-brand-navy dark:text-slate-100 font-bold text-[10px] uppercase tracking-wider rounded">
-                    Consular Checklist
-                  </div>
-                  {extraFile && (
-                    <span className="flex items-center gap-1 text-[11px] font-bold text-green-600">
-                      <CheckCircle2 className="w-3.5 h-3.5" /> Uploaded
-                    </span>
-                  )}
-                </div>
-
-                <h4 className="font-extrabold text-base text-brand-navy dark:text-slate-100">Supporting Essentials</h4>
-                <p className="text-xs text-text-muted dark:text-slate-400 mt-1 leading-relaxed">
-                  Upload additional required papers (e.g. Yellow Fever Certificate, proof of lodging, or flight itineraries).
-                </p>
-
-                <div className="mt-4">
-                  {extraUploading && (
-                    <div className="space-y-2">
-                      <div className="flex justify-between text-xs font-bold text-brand-navy dark:text-slate-100">
-                        <span>Uploading files...</span>
-                        <span>{extraProgress}%</span>
-                      </div>
-                      <div className="w-full h-1.5 bg-brand-gray-light dark:bg-slate-850 rounded-full overflow-hidden">
-                        <div className="h-full bg-brand-navy transition-all" style={{ width: `${extraProgress}%` }} />
-                      </div>
-                    </div>
-                  )}
-
-                  {extraFile && (
-                    <div className="p-3 bg-brand-gray-light dark:bg-slate-850 rounded-lg border border-brand-navy/5 dark:border-slate-850 flex items-center justify-between text-xs">
-                      <div className="min-w-0">
-                        <p className="font-bold text-brand-navy dark:text-slate-100 truncate">{extraFile.name}</p>
-                        <p className="text-[10px] text-text-muted dark:text-slate-400 mt-0.5">{extraFile.size}</p>
-                      </div>
-                      <button
-                        onClick={() => setExtraFile(null)}
-                        className="p-1 hover:bg-red-50 hover:text-red-500 rounded text-brand-navy dark:text-slate-100/40 transition-colors"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
-
-                  {!extraFile && !extraUploading && (
-                    <label className="border-2 border-dashed border-brand-navy/10 dark:border-slate-800 hover:border-brand-gold/50 rounded-xl p-6 flex flex-col items-center justify-center text-center cursor-pointer transition-colors bg-brand-gray-light dark:bg-slate-850/30">
-                      <Upload className="w-6 h-6 text-brand-navy dark:text-slate-100/30 mb-2" />
-                      <span className="text-xs font-bold text-brand-navy dark:text-slate-100">Upload Certificates</span>
-                      <span className="text-[10px] text-text-muted dark:text-slate-400 mt-1">PDF or image formats</span>
-                      <input
-                        type="file"
-                        onChange={handleExtraUpload}
-                        className="hidden"
-                      />
-                    </label>
-                  )}
-                </div>
-              </div>
-            </div>
-
-          </div>
-        </div>
       </div>
 
-      {/* RIGHT COLUMN: Protocol details and quick actions */}
+      {/* RIGHT COLUMN: Protocol details */}
       <div className="md:col-span-4 space-y-6">
         
         {/* ASSIGNED PROTOCOL OFFICER CARD */}
@@ -669,60 +227,16 @@ export default function ClientDashboard() {
                 <Phone className="w-3.5 h-3.5 text-brand-gold" />
                 Call Liaison
               </a>
-              <button
-                onClick={() => alert("Initiating Live-Chat with Liaison Keza Agasaro...")}
-                className="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-brand-navy hover:bg-brand-blue-dark text-white font-bold text-xs transition-colors cursor-pointer"
+              <Link
+                href="/portal/client/messages"
+                className="flex items-center justify-center gap-2 py-2.5 rounded-lg bg-brand-navy hover:bg-brand-blue-dark text-white font-bold text-xs transition-all duration-300"
               >
-                <MessageSquare className="w-3.5 h-3.5 text-brand-gold" />
+                <MessageSquare className="w-3.5 h-3.5 text-brand-gold animate-pulse" />
                 Live Chat
-              </button>
+              </Link>
             </div>
           </div>
         </div>
-
-        {/* TRIP INFO SUMMARY CARD */}
-        <div id="trips" className="bg-white dark:bg-slate-900 rounded-3xl border border-brand-navy/10 dark:border-slate-800 p-6 shadow-sm dark:shadow-none">
-          <h3 className="font-extrabold text-md tracking-tight mb-4 text-brand-navy dark:text-slate-100">Active Itinerary Summary</h3>
-          
-          <div className="space-y-4 text-xs font-semibold">
-            <div className="flex items-center justify-between p-3 bg-brand-gray-light dark:bg-slate-850 rounded-xl border border-brand-navy/5 dark:border-slate-850">
-              <div className="text-left">
-                <p className="text-[10px] text-text-muted dark:text-slate-400 uppercase font-bold tracking-wider">Destination</p>
-                <p className="font-bold text-brand-navy dark:text-slate-100 mt-0.5">Volcanoes National Park</p>
-              </div>
-              <span className="px-2.5 py-1 bg-brand-gold/10 text-brand-navy dark:text-slate-100 rounded font-bold text-[10px]">
-                Gorilla Trekking
-              </span>
-            </div>
-
-            <div className="space-y-2">
-              <div className="flex justify-between border-b border-brand-navy/5 dark:border-slate-850 pb-2">
-                <span className="text-text-muted dark:text-slate-400">Travel Date:</span>
-                <span className="text-brand-navy dark:text-slate-100 font-bold">Aug 12 - Aug 17, 2026</span>
-              </div>
-              <div className="flex justify-between border-b border-brand-navy/5 dark:border-slate-850 pb-2">
-                <span className="text-text-muted dark:text-slate-400">Flight Code:</span>
-                <span className="text-brand-navy dark:text-slate-100 font-bold">WB-102 (RwandAir)</span>
-              </div>
-              <div className="flex justify-between border-b border-brand-navy/5 dark:border-slate-850 pb-2">
-                <span className="text-text-muted dark:text-slate-400">Hotel Booking:</span>
-                <span className="text-brand-navy dark:text-slate-100 font-bold">Bisate Lodge (Bespoke Villa)</span>
-              </div>
-              <div className="flex justify-between">
-                <span className="text-text-muted dark:text-slate-400">Consular Visa Status:</span>
-                <span className="text-brand-gold font-black">STAMPED APPROVED</span>
-              </div>
-            </div>
-
-            <button
-              onClick={() => alert("Downloading secure e-ticket receipts...")}
-              className="w-full text-center py-2.5 bg-brand-gray-light dark:bg-slate-850 hover:bg-brand-navy hover:text-white rounded-lg text-brand-navy dark:text-slate-100 font-bold text-xs uppercase tracking-wider transition-all duration-300"
-            >
-              Download E-Tickets & Vouchers
-            </button>
-          </div>
-        </div>
-
       </div>
     </div>
   );

@@ -157,20 +157,20 @@ export default function Home() {
         {/* Desktop Nav Links */}
         <nav className="hidden md:flex items-center gap-8 font-semibold">
           {[
-            { label: "Who We Are", href: "#about" },
-            { label: "Services", href: "#services" },
-            { label: "Vision & Mission", href: "#vision" },
-            { label: "Objectives", href: "#objectives" },
-            { label: "Contact", href: "#contact" }
+            { label: "Who We Are", href: "/about" },
+            { label: "Services", href: "/services" },
+            { label: "Bespoke Safaris", href: "/safaris" },
+            { label: "Our Partners", href: "/partners" },
+            { label: "Contact Us", href: "/contact" }
           ].map((link) => (
-            <a
+            <Link
               key={link.label}
               href={link.href}
               className="text-sm text-text-dark dark:text-slate-200 hover:text-brand-gold dark:hover:text-brand-gold transition-colors relative py-2 group"
             >
               {link.label}
               <span className="absolute bottom-0 left-0 w-0 h-[2px] bg-brand-gold transition-all duration-300 group-hover:w-full" />
-            </a>
+            </Link>
           ))}
         </nav>
 
@@ -227,20 +227,20 @@ export default function Home() {
             className="md:hidden bg-white dark:bg-slate-950 border-b border-brand-gray-light dark:border-slate-900 px-6 py-4 flex flex-col gap-4 font-semibold shadow-inner"
           >
             {[
-              { label: "Who We Are", href: "#about" },
-              { label: "Services", href: "#services" },
-              { label: "Vision & Mission", href: "#vision" },
-              { label: "Objectives", href: "#objectives" },
-              { label: "Contact", href: "#contact" }
+              { label: "Who We Are", href: "/about" },
+              { label: "Services", href: "/services" },
+              { label: "Bespoke Safaris", href: "/safaris" },
+              { label: "Our Partners", href: "/partners" },
+              { label: "Contact Us", href: "/contact" }
             ].map((link) => (
-              <a
+              <Link
                 key={link.label}
                 href={link.href}
                 onClick={() => setMobileMenuOpen(false)}
                 className="text-text-dark dark:text-slate-200 hover:text-brand-gold py-2 border-b border-brand-gray-light dark:border-slate-900"
               >
                 {link.label}
-              </a>
+              </Link>
             ))}
             <div className="flex flex-col gap-2 pt-2">
               <Link
