@@ -15,10 +15,31 @@ import {
 } from "lucide-react";
 
 export default function ConsularGateway() {
-  const [simulatedClients, setSimulatedClients] = useState<any[]>([]);
-  const [dispatches, setDispatches] = useState<any[]>([]);
+  const [simulatedClients, setSimulatedClients] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedAdminClients");
+      return cached ? JSON.parse(cached) : [];
+    }
+    return [];
+  });
+  const [dispatches, setDispatches] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedDispatches");
+      return cached ? JSON.parse(cached) : [];
+    }
+    return [];
+  });
   
-  const [formClient, setFormClient] = useState("");
+  const [formClient, setFormClient] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedAdminClients");
+      if (cached) {
+        const parsed = JSON.parse(cached);
+        return parsed.length > 0 ? parsed[0].id : "";
+      }
+    }
+    return "";
+  });
   const [formPartner, setFormPartner] = useState("German Embassy Kigali");
   const [sharePassport, setSharePassport] = useState(true);
   const [shareInvite, setShareInvite] = useState(false);
@@ -37,8 +58,10 @@ export default function ConsularGateway() {
           const dispatchesData = await dispatchesRes.json();
           setSimulatedClients(clientsData);
           setDispatches(dispatchesData);
+          localStorage.setItem("cachedAdminClients", JSON.stringify(clientsData));
+          localStorage.setItem("cachedDispatches", JSON.stringify(dispatchesData));
           
-          if (clientsData.length > 0) {
+          if (clientsData.length > 0 && !formClient) {
             setFormClient(clientsData[0].id);
           }
         }

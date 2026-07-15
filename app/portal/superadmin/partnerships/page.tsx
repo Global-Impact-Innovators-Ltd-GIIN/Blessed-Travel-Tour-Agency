@@ -12,8 +12,20 @@ import {
 } from "lucide-react";
 
 export default function SuperadminPartnerships() {
-  const [partnerApps, setPartnerApps] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [partnerApps, setPartnerApps] = useState<any[]>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedPartnerApps");
+      return cached ? JSON.parse(cached) : [];
+    }
+    return [];
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedPartnerApps");
+      return !cached;
+    }
+    return true;
+  });
 
   // Load active applications on mount
   useEffect(() => {
@@ -23,6 +35,7 @@ export default function SuperadminPartnerships() {
         if (res.ok) {
           const data = await res.json();
           setPartnerApps(data);
+          localStorage.setItem("cachedPartnerApps", JSON.stringify(data));
         }
       } catch (err) {
         console.error("Failed to load partner apps:", err);

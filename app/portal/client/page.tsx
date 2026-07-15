@@ -23,9 +23,23 @@ interface Step {
 }
 
 export default function ClientDashboard() {
-  const [currentStepId, setCurrentStepId] = useState(1);
+  const [clientRecord, setClientRecord] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedClientRecord");
+      return cached ? JSON.parse(cached) : null;
+    }
+    return null;
+  });
+  const [currentStepId, setCurrentStepId] = useState<number>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedClientRecord");
+      if (cached) {
+        return JSON.parse(cached).activeStep || 1;
+      }
+    }
+    return 1;
+  });
   const [activePopover, setActivePopover] = useState<number | null>(null);
-  const [clientRecord, setClientRecord] = useState<any>(null);
 
   // Load client record from Supabase via API
   useEffect(() => {
@@ -42,6 +56,7 @@ export default function ClientDashboard() {
             if (record) {
               setClientRecord(record);
               setCurrentStepId(record.activeStep);
+              localStorage.setItem("cachedClientRecord", JSON.stringify(record));
             }
           }
         } catch (err) {

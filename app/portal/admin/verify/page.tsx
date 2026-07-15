@@ -20,8 +20,24 @@ function VerificationContent() {
   const router = useRouter();
   const clientId = searchParams.get("id");
 
-  const [loading, setLoading] = useState(true);
-  const [client, setClient] = useState<any>(null);
+  const [client, setClient] = useState<any>(() => {
+    if (typeof window !== "undefined" && clientId) {
+      const cached = localStorage.getItem("cachedAdminClients");
+      if (cached) {
+        return JSON.parse(cached).find((c: any) => c.id === clientId) || null;
+      }
+    }
+    return null;
+  });
+  const [loading, setLoading] = useState(() => {
+    if (typeof window !== "undefined" && clientId) {
+      const cached = localStorage.getItem("cachedAdminClients");
+      if (cached) {
+        return !JSON.parse(cached).some((c: any) => c.id === clientId);
+      }
+    }
+    return true;
+  });
   const [verifyingDoc, setVerifyingDoc] = useState<"passport" | "invite" | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
 
@@ -37,6 +53,17 @@ function VerificationContent() {
           const data = await res.json();
           const match = data.find((c: any) => c.id === clientId);
           setClient(match || null);
+          
+          // Update list cache with fresh details
+          const cached = localStorage.getItem("cachedAdminClients");
+          if (cached) {
+            const list = JSON.parse(cached);
+            const index = list.findIndex((c: any) => c.id === clientId);
+            if (index !== -1 && match) {
+              list[index] = match;
+              localStorage.setItem("cachedAdminClients", JSON.stringify(list));
+            }
+          }
         }
       } catch (err) {
         console.error("Database connection failure:", err);

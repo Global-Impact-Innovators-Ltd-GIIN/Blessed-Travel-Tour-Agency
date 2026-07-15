@@ -29,7 +29,13 @@ interface ClientRecord {
 
 export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [simulatedClients, setSimulatedClients] = useState<ClientRecord[]>([]);
+  const [simulatedClients, setSimulatedClients] = useState<ClientRecord[]>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedAdminClients");
+      return cached ? JSON.parse(cached) : [];
+    }
+    return [];
+  });
 
   // Load clients dynamically from database on mount
   useEffect(() => {
@@ -39,6 +45,7 @@ export default function AdminDashboard() {
         if (res.ok) {
           const data = await res.json();
           setSimulatedClients(data);
+          localStorage.setItem("cachedAdminClients", JSON.stringify(data));
         }
       } catch (err) {
         console.error("Database connection failure:", err);

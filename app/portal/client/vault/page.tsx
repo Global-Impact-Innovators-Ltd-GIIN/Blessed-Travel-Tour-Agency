@@ -14,16 +14,67 @@ import {
 } from "lucide-react";
 
 export default function ClientVault() {
-  const [clientRecord, setClientRecord] = useState<any>(null);
+  const [clientRecord, setClientRecord] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedClientRecord");
+      return cached ? JSON.parse(cached) : null;
+    }
+    return null;
+  });
 
   // Document states
-  const [passportFile, setPassportFile] = useState<{ name: string; size: string; status: string } | null>(null);
+  const [passportFile, setPassportFile] = useState<{ name: string; size: string; status: string } | null>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedClientRecord");
+      if (cached) {
+        const record = JSON.parse(cached);
+        if (record.passportStatus && record.passportStatus !== "Pending") {
+          return {
+            name: "passport_scan.jpg",
+            size: "2.4 MB",
+            status: record.passportStatus
+          };
+        }
+      }
+    }
+    return null;
+  });
   const [passportUploading, setPassportUploading] = useState(false);
   const [passportScanning, setPassportScanning] = useState(false);
   const [passportProgress, setPassportProgress] = useState(0);
-  const [scannedData, setScannedData] = useState<{ name: string; num: string; exp: string } | null>(null);
+  const [scannedData, setScannedData] = useState<{ name: string; num: string; exp: string } | null>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedClientRecord");
+      if (cached) {
+        const record = JSON.parse(cached);
+        if (record.passportStatus === "Approved") {
+          return {
+            name: record.name.toUpperCase(),
+            num: "PC9283401",
+            exp: "2031-10-12"
+          };
+        }
+      }
+    }
+    return null;
+  });
 
-  const [inviteFile, setInviteFile] = useState<{ name: string; size: string; status: string } | null>(null);
+  const [inviteFile, setInviteFile] = useState<{ name: string; size: string; status: string } | null>(() => {
+    if (typeof window !== "undefined") {
+      const cached = localStorage.getItem("cachedClientRecord");
+      if (cached) {
+        const record = JSON.parse(cached);
+        if (record.inviteStatus && record.inviteStatus !== "Pending") {
+          return {
+            name: "invitation_letter.pdf",
+            size: "1.2 MB",
+            status: record.inviteStatus
+          };
+        }
+      }
+    }
+    return null;
+  });
   const [inviteUploading, setInviteUploading] = useState(false);
   const [inviteProgress, setInviteProgress] = useState(0);
 
@@ -45,6 +96,7 @@ export default function ClientVault() {
             const record = data.find((c: any) => c.email === email);
             if (record) {
               setClientRecord(record);
+              localStorage.setItem("cachedClientRecord", JSON.stringify(record));
               if (record.passportStatus && record.passportStatus !== "Pending") {
                 setPassportFile({
                   name: "passport_scan.jpg",
