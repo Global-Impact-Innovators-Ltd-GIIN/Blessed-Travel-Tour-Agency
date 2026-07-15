@@ -9,23 +9,30 @@ import {
   Building,
   Check,
   ArrowLeft,
-  ArrowUpRight,
   Sun,
   Moon,
   Plane,
   Shield,
   Briefcase,
-  FileText,
   Send,
   Mail,
   User,
-  HeartHandshake
+  HeartHandshake,
+  RefreshCw
 } from "lucide-react";
 
 export default function Partners() {
   const [theme, setTheme] = useState("light");
   const [formSubmitted, setFormSubmitted] = useState(false);
   const [partnerType, setPartnerType] = useState("Airline Partner");
+
+  // Form states
+  const [companyName, setCompanyName] = useState("");
+  const [contactPerson, setContactPerson] = useState("");
+  const [emailAddress, setEmailAddress] = useState("");
+  const [description, setDescription] = useState("");
+  const [formLoading, setFormLoading] = useState(false);
+  const [formError, setFormError] = useState("");
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -95,6 +102,43 @@ export default function Partners() {
       color: "from-yellow-400/10 to-amber-400/10 border-yellow-400/20"
     }
   ];
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormLoading(true);
+    setFormError("");
+
+    try {
+      const res = await fetch("/api/partners", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          companyName,
+          contactPerson,
+          email: emailAddress,
+          category: partnerType,
+          description
+        }),
+      });
+
+      setFormLoading(false);
+      if (res.ok) {
+        setFormSubmitted(true);
+        setCompanyName("");
+        setContactPerson("");
+        setEmailAddress("");
+        setDescription("");
+      } else {
+        const data = await res.json();
+        setFormError(data.error || "Failed to submit request.");
+      }
+    } catch (err) {
+      setFormLoading(false);
+      setFormError("Database Connection Failure: Unable to transmit application.");
+    }
+  };
 
   return (
     <div className="min-h-screen bg-white dark:bg-slate-950 text-brand-navy dark:text-slate-100 flex flex-col selection:bg-brand-gold selection:text-brand-navy transition-colors duration-300">
@@ -221,7 +265,12 @@ export default function Partners() {
                 </button>
               </motion.div>
             ) : (
-              <form onSubmit={(e) => { e.preventDefault(); setFormSubmitted(true); }} className="space-y-4 text-xs font-semibold">
+              <form onSubmit={handleSubmit} className="space-y-4 text-xs font-semibold">
+                {formError && (
+                  <div className="p-3 bg-red-50 dark:bg-red-950/20 border-l-4 border-red-500 text-red-700 dark:text-red-400 rounded">
+                    {formError}
+                  </div>
+                )}
                 <div className="grid md:grid-cols-2 gap-4">
                   <div className="flex flex-col">
                     <label className="text-[10px] font-bold text-brand-navy/60 dark:text-slate-400 uppercase tracking-widest mb-1.5">Company Name</label>
@@ -230,6 +279,8 @@ export default function Partners() {
                       <input
                         type="text"
                         required
+                        value={companyName}
+                        onChange={(e) => setCompanyName(e.target.value)}
                         className="w-full bg-brand-gray-light dark:bg-slate-800 border border-brand-navy/10 dark:border-slate-700 focus:border-brand-gold rounded-lg pl-9 pr-4 py-2.5 text-sm text-brand-navy dark:text-white focus:outline-none"
                         placeholder="e.g. Radisson Blu"
                       />
@@ -242,6 +293,8 @@ export default function Partners() {
                       <input
                         type="text"
                         required
+                        value={contactPerson}
+                        onChange={(e) => setContactPerson(e.target.value)}
                         className="w-full bg-brand-gray-light dark:bg-slate-800 border border-brand-navy/10 dark:border-slate-700 focus:border-brand-gold rounded-lg pl-9 pr-4 py-2.5 text-sm text-brand-navy dark:text-white focus:outline-none"
                         placeholder="e.g. Marie Keza"
                       />
@@ -256,6 +309,8 @@ export default function Partners() {
                     <input
                       type="email"
                       required
+                      value={emailAddress}
+                      onChange={(e) => setEmailAddress(e.target.value)}
                       className="w-full bg-brand-gray-light dark:bg-slate-800 border border-brand-navy/10 dark:border-slate-700 focus:border-brand-gold rounded-lg pl-9 pr-4 py-2.5 text-sm text-brand-navy dark:text-white focus:outline-none"
                       placeholder="marie@hotelgroup.com"
                     />
@@ -281,6 +336,8 @@ export default function Partners() {
                   <textarea
                     rows={4}
                     required
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
                     className="w-full bg-brand-gray-light dark:bg-slate-800 border border-brand-navy/10 dark:border-slate-700 focus:border-brand-gold rounded-lg px-4 py-2.5 text-sm text-brand-navy dark:text-white focus:outline-none resize-none"
                     placeholder="Brief outline of how we can work together..."
                   />
@@ -288,10 +345,17 @@ export default function Partners() {
 
                 <button
                   type="submit"
-                  className="w-full bg-brand-navy dark:bg-brand-gold hover:bg-brand-blue-dark dark:hover:bg-yellow-500 text-white dark:text-brand-navy font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300"
+                  disabled={formLoading}
+                  className="w-full bg-brand-navy dark:bg-brand-gold hover:bg-brand-blue-dark dark:hover:bg-yellow-500 text-white dark:text-brand-navy font-bold py-3 rounded-lg flex items-center justify-center gap-2 transition-all duration-300 cursor-pointer disabled:opacity-50"
                 >
-                  Submit Application
-                  <Send className="w-4 h-4" />
+                  {formLoading ? (
+                    <RefreshCw className="w-4 h-4 animate-spin" />
+                  ) : (
+                    <>
+                      Submit Application
+                      <Send className="w-4 h-4" />
+                    </>
+                  )}
                 </button>
               </form>
             )}

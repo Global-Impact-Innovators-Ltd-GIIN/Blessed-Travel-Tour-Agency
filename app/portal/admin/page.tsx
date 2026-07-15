@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Users,
@@ -40,108 +40,92 @@ export default function AdminDashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedClient, setSelectedClient] = useState<ClientRecord | null>(null);
   const [showDrawer, setShowDrawer] = useState(false);
-  const [simulatedClients, setSimulatedClients] = useState<ClientRecord[]>([
-    {
-      id: "BTA-784-KGL",
-      name: "John Doe",
-      email: "john.doe@gmail.com",
-      destination: "Volcanoes National Park, RW",
-      activeStep: 2,
-      passportStatus: "Approved",
-      inviteStatus: "Uploaded",
-      officer: "Keza Agasaro",
-    },
-    {
-      id: "BTA-902-KGL",
-      name: "Hon. Sarah Jenkins",
-      email: "s.jenkins@diplomatic.gov",
-      destination: "Paris, France",
-      activeStep: 3,
-      passportStatus: "Approved",
-      inviteStatus: "Approved",
-      officer: "Eric Murwanashyaka",
-    },
-    {
-      id: "BTA-143-KGL",
-      name: "Jean-Pierre Nsenga",
-      email: "jp.nsenga@ur.ac.rw",
-      destination: "Berlin, Germany",
-      activeStep: 1,
-      passportStatus: "Uploaded",
-      inviteStatus: "Pending",
-      officer: "Keza Agasaro",
-    },
-    {
-      id: "BTA-551-KGL",
-      name: "Emily Watson",
-      email: "emily.watson@academic.edu",
-      destination: "Akagera Safari, RW",
-      activeStep: 4,
-      passportStatus: "Approved",
-      inviteStatus: "Approved",
-      officer: "Eric Murwanashyaka",
-    }
-  ]);
+  const [simulatedClients, setSimulatedClients] = useState<ClientRecord[]>([]);
+  const [dispatches, setDispatches] = useState<any[]>([]);
 
-  // Consular Partnerships Dispatches state & form handlers
-  const [dispatches, setDispatches] = useState([
-    {
-      id: "DIS-001",
-      clientName: "John Doe",
-      clientId: "BTA-784-KGL",
-      partner: "German Embassy Kigali",
-      documents: ["Passport Bio Scan"],
-      status: "Under Review",
-      date: "2026-07-15 14:02"
-    },
-    {
-      id: "DIS-002",
-      clientName: "Hon. Sarah Jenkins",
-      clientId: "BTA-902-KGL",
-      partner: "Qatar Airways",
-      documents: ["Passport Bio Scan", "Official Invitation Letter"],
-      status: "Approved - Ticket Issued",
-      date: "2026-07-15 11:30"
-    }
-  ]);
-
-  const [formClient, setFormClient] = useState("BTA-784-KGL");
+  const [formClient, setFormClient] = useState("");
   const [formPartner, setFormPartner] = useState("German Embassy Kigali");
   const [sharePassport, setSharePassport] = useState(true);
   const [shareInvite, setShareInvite] = useState(false);
   const [dispatchLoading, setDispatchLoading] = useState(false);
 
-  const handleDispatch = (e: React.FormEvent) => {
+  // Load clients and transmissions dynamically on mount
+  useEffect(() => {
+    async function loadData() {
+      try {
+        const [clientsRes, dispatchesRes] = await Promise.all([
+          fetch("/api/clients"),
+          fetch("/api/dispatches")
+        ]);
+        if (clientsRes.ok && dispatchesRes.ok) {
+          const clientsData = await clientsRes.json();
+          const dispatchesData = await dispatchesRes.json();
+          setSimulatedClients(clientsData);
+          setDispatches(dispatchesData);
+          
+          if (clientsData.length > 0) {
+            setFormClient(clientsData[0].id);
+          }
+        }
+      } catch (err) {
+        console.error("Database connection failure:", err);
+      }
+    }
+    loadData();
+  }, []);
+
+  const handleDispatch = async (e: React.FormEvent) => {
     e.preventDefault();
     const matchedClient = simulatedClients.find(c => c.id === formClient);
     if (!matchedClient) return;
 
     setDispatchLoading(true);
-    setTimeout(() => {
+    const docs = [];
+    if (sharePassport) docs.push("Passport Bio Scan");
+    if (shareInvite) docs.push("Official Invitation Letter");
+
+    const payload = {
+      id: "DIS-" + Math.floor(Math.random() * 900 + 100),
+      clientName: matchedClient.name,
+      clientId: matchedClient.id,
+      partner: formPartner,
+      documents: docs,
+      status: "Submitted to Partner",
+      date: new Date().toISOString().replace('T', ' ').slice(0, 16)
+    };
+
+    try {
+      const res = await fetch("/api/dispatches", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+      });
       setDispatchLoading(false);
-      const docs = [];
-      if (sharePassport) docs.push("Passport Bio Scan");
-      if (shareInvite) docs.push("Official Invitation Letter");
-
-      const newDispatch = {
-        id: "DIS-" + Math.floor(Math.random() * 900 + 100),
-        clientName: matchedClient.name,
-        clientId: matchedClient.id,
-        partner: formPartner,
-        documents: docs,
-        status: "Submitted to Partner",
-        date: new Date().toISOString().replace('T', ' ').slice(0, 16)
-      };
-
-      setDispatches(prev => [newDispatch, ...prev]);
-      alert(`Success: Dossier dispatched to ${formPartner} securely via 256-bit API tunnel!`);
-    }, 1000);
+      if (res.ok) {
+        const newDispatch = await res.json();
+        setDispatches(prev => [newDispatch, ...prev]);
+        alert(`Success: Dossier dispatched to ${formPartner} securely via 256-bit API tunnel!`);
+      }
+    } catch (err) {
+      setDispatchLoading(false);
+      alert("Error: Database connection failed.");
+    }
   };
 
-  const handleSimulatePartnerResponse = (dispatchId: string, newStatus: string) => {
-    setDispatches(prev =>
-      prev.map(d => d.id === dispatchId ? { ...d, status: newStatus } : d)
-    );
+  const handleSimulatePartnerResponse = async (dispatchId: string, newStatus: string) => {
+    try {
+      const res = await fetch("/api/dispatches", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: dispatchId, status: newStatus })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setDispatches(prev => prev.map(d => d.id === dispatchId ? updated : d));
+      }
+    } catch (err) {
+      alert("Error: Simulation failed.");
+    }
   };
 
   // Filter clients based on search query
@@ -152,46 +136,52 @@ export default function AdminDashboard() {
       c.destination.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
-  const handleUpdateStep = (clientId: string, newStep: number) => {
-    setSimulatedClients((prev) =>
-      prev.map((c) => (c.id === clientId ? { ...c, activeStep: newStep } : c))
-    );
-    if (selectedClient && selectedClient.id === clientId) {
-      setSelectedClient((prev) => (prev ? { ...prev, activeStep: newStep } : null));
+  const handleUpdateStep = async (clientId: string, newStep: number) => {
+    try {
+      const res = await fetch("/api/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id: clientId, activeStep: newStep })
+      });
+      if (res.ok) {
+        const updated = await res.json();
+        setSimulatedClients(prev => prev.map(c => c.id === clientId ? updated : c));
+        if (selectedClient && selectedClient.id === clientId) {
+          setSelectedClient(updated);
+        }
+      }
+    } catch (err) {
+      alert("Error: Database synchronisation failed.");
     }
   };
 
-  const handleVerifyDocument = (
+  const handleVerifyDocument = async (
     clientId: string,
     docType: "passport" | "invite",
     status: "Approved" | "Rejected"
   ) => {
-    setSimulatedClients((prev) =>
-      prev.map((c) => {
-        if (c.id === clientId) {
-          if (docType === "passport") {
-            return { ...c, passportStatus: status };
-          } else {
-            return { ...c, inviteStatus: status };
-          }
-        }
-        return c;
-      })
-    );
+    try {
+      const payload: any = { id: clientId };
+      if (docType === "passport") payload.passportStatus = status;
+      if (docType === "invite") payload.inviteStatus = status;
 
-    // Update current detail screen if active
-    if (selectedClient && selectedClient.id === clientId) {
-      setSelectedClient((prev) => {
-        if (!prev) return null;
-        if (docType === "passport") {
-          return { ...prev, passportStatus: status };
-        } else {
-          return { ...prev, inviteStatus: status };
-        }
+      const res = await fetch("/api/clients", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
       });
-    }
 
-    alert(`Notification: Automatically dispatched alert to client regarding ${docType} ${status.toLowerCase()} status!`);
+      if (res.ok) {
+        const updated = await res.json();
+        setSimulatedClients(prev => prev.map(c => c.id === clientId ? updated : c));
+        if (selectedClient && selectedClient.id === clientId) {
+          setSelectedClient(updated);
+        }
+        alert(`Notification: Automatically dispatched alert to client regarding ${docType} ${status.toLowerCase()} status!`);
+      }
+    } catch (err) {
+      alert("Error: Database synchronisation failed.");
+    }
   };
 
   const getStepBadge = (step: number) => {
@@ -478,7 +468,7 @@ export default function AdminDashboard() {
                       Shared with: <span className="font-bold text-brand-navy dark:text-slate-100">{d.partner}</span>
                     </div>
                     <div className="flex flex-wrap gap-1">
-                      {d.documents.map((doc, idx) => (
+                      {d.documents.map((doc: string, idx: number) => (
                         <span key={idx} className="text-[9px] bg-brand-gold/10 text-brand-navy dark:text-brand-gold px-2 py-0.5 rounded font-semibold flex items-center gap-1 border border-brand-gold/20">
                           <FileText className="w-2.5 h-2.5" />
                           {doc}

@@ -36,7 +36,7 @@ export default function Signup() {
   const passwordMeetsLength = password.length >= 8;
   const passwordMeetsStrength = /[0-9!@#$%^&*(),.?":{}|<>]/.test(password);
 
-  const handleSignup = (e: React.FormEvent) => {
+  const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) {
       setError("Please fill in all onboarding fields.");
@@ -51,23 +51,32 @@ export default function Signup() {
     setLoading(true);
     setError("");
 
-    // Simulate account registration
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth/signup", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ name, email, password, role: "client" }),
+      });
+
+      const data = await res.json();
       setLoading(false);
 
-      // Append to local storage registered list
-      const registeredJson = localStorage.getItem("registeredUsers") || "[]";
-      const users = JSON.parse(registeredJson);
-      users.push({ name, email, password });
-      localStorage.setItem("registeredUsers", JSON.stringify(users));
-
-      // Authenticate session
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("userEmail", email);
-      localStorage.setItem("userRole", "client");
-      localStorage.setItem("userName", name);
-      router.push("/portal/client");
-    }, 1500);
+      if (res.ok && data.success) {
+        // Authenticate session
+        localStorage.setItem("isLoggedIn", "true");
+        localStorage.setItem("userEmail", data.user.email);
+        localStorage.setItem("userRole", data.user.role);
+        localStorage.setItem("userName", data.user.name);
+        router.push("/portal/client");
+      } else {
+        setError(data.error || "Onboarding failed. Please try again.");
+      }
+    } catch (err) {
+      setLoading(false);
+      setError("Database Connection Failure: Unable to record registrations. Check network settings.");
+    }
   };
 
   return (

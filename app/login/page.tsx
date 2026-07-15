@@ -38,7 +38,7 @@ export default function Login() {
   const [otpLoading, setOtpLoading] = useState(false);
   const [sessionDetails, setSessionDetails] = useState<any>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!email || !password) {
       setError("Please fill in all credentials.");
@@ -48,51 +48,29 @@ export default function Login() {
     setLoading(true);
     setError("");
 
-    // Simulate authentication processing
-    setTimeout(() => {
+    try {
+      const res = await fetch("/api/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ email, password }),
+      });
+
+      const data = await res.json();
       setLoading(false);
-      
-      let authenticated = false;
-      let resolvedRole = role;
-      let resolvedName = "User";
 
-      // 1. Check predefined secure users
-      if (email === "superadmin@blessedtravel.rw" && password === "BlessedSuper2026!") {
-        authenticated = true;
-        resolvedRole = "superadmin";
-        resolvedName = "Super Administrator";
-      } else if (email === "agent.keza@blessedtravel.rw" && password === "BlessedAgent2026!") {
-        authenticated = true;
-        resolvedRole = "admin";
-        resolvedName = "Agent Keza";
-      } else if (email === "client@gmail.com" && password === "BlessedClient2026!") {
-        authenticated = true;
-        resolvedRole = "client";
-        resolvedName = "John Doe";
-      } else {
-        // 2. Check registered user list from signup
-        const registeredJson = localStorage.getItem("registeredUsers");
-        if (registeredJson) {
-          const users = JSON.parse(registeredJson);
-          const matched = users.find((u: any) => u.email === email && u.password === password);
-          if (matched) {
-            authenticated = true;
-            resolvedRole = "client";
-            resolvedName = matched.name;
-          }
-        }
-      }
-
-      if (authenticated) {
+      if (res.ok && data.success) {
         // Hold session parameters and prompt for 2FA
         setSessionDetails({
-          email,
-          role: resolvedRole,
-          name: resolvedName
+          email: data.user.email,
+          role: data.user.role,
+          name: data.user.name
         });
         setShowOTP(true);
       } else {
         setError(
+          data.error || 
           "Access Denied: Invalid email or password. Please use standard secure accounts:\n" +
           "• Client: client@gmail.com / BlessedClient2026!\n" +
           "• Agent: agent.keza@blessedtravel.rw / BlessedAgent2026!\n" +
@@ -100,7 +78,10 @@ export default function Login() {
           "(Or sign up a new account first)"
         );
       }
-    }, 1500);
+    } catch (err) {
+      setLoading(false);
+      setError("Database Connection Failure: Unable to reach authorization servers. Check network configurations.");
+    }
   };
 
   const handleOTPVerify = (e: React.FormEvent) => {

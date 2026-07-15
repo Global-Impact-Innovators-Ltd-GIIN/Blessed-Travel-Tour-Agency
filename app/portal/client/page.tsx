@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -33,8 +33,57 @@ interface Step {
 
 export default function ClientDashboard() {
   // State for the Progress Tracker steps
-  const [currentStepId, setCurrentStepId] = useState(2); // 1 = Submission, 2 = Review, 3 = Embassy, 4 = Finalized
+  const [currentStepId, setCurrentStepId] = useState(1); // 1 = Submission, 2 = Review, 3 = Embassy, 4 = Finalized
   const [activePopover, setActivePopover] = useState<number | null>(null);
+  const [clientRecord, setClientRecord] = useState<any>(null);
+
+  // Load client record from Supabase via API
+  useEffect(() => {
+    async function loadClient() {
+      if (typeof window !== "undefined") {
+        const email = localStorage.getItem("userEmail");
+        if (!email) return;
+
+        try {
+          const res = await fetch("/api/clients");
+          if (res.ok) {
+            const data = await res.json();
+            const record = data.find((c: any) => c.email === email);
+            if (record) {
+              setClientRecord(record);
+              setCurrentStepId(record.activeStep);
+              
+              if (record.passportStatus && record.passportStatus !== "Pending") {
+                setPassportFile({
+                  name: "passport_scan.jpg",
+                  size: "2.4 MB",
+                  status: record.passportStatus
+                });
+                if (record.passportStatus === "Approved") {
+                  setScannedData({
+                    name: record.name.toUpperCase(),
+                    num: "PC9283401",
+                    exp: "2031-10-12"
+                  });
+                }
+              }
+
+              if (record.inviteStatus && record.inviteStatus !== "Pending") {
+                setInviteFile({
+                  name: "invitation_letter.pdf",
+                  size: "1.2 MB",
+                  status: record.inviteStatus
+                });
+              }
+            }
+          }
+        } catch (err) {
+          console.error("Database connection failed:", err);
+        }
+      }
+    }
+    loadClient();
+  }, []);
 
   // Steps database mock
   const steps: Step[] = [
@@ -114,18 +163,33 @@ export default function ClientDashboard() {
 
   const triggerOCRScan = (fileName: string) => {
     setPassportScanning(true);
-    setTimeout(() => {
+    setTimeout(async () => {
       setPassportScanning(false);
       setPassportFile({
         name: fileName,
         size: "1.8 MB",
-        status: "Approved"
+        status: "Uploaded"
       });
       setScannedData({
-        name: "JOHN DOE",
+        name: clientRecord?.name?.toUpperCase() || "JOHN DOE",
         num: "PC9283401",
         exp: "2031-10-12"
       });
+
+      // Update document upload flag in Supabase
+      if (clientRecord) {
+        try {
+          await fetch("/api/clients", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ id: clientRecord.id, passportStatus: "Uploaded" }),
+          });
+        } catch (err) {
+          console.error("Error updating passport status:", err);
+        }
+      }
     }, 2500); // 2.5 seconds of futuristic scanning line animation
   };
 
@@ -145,8 +209,19 @@ export default function ClientDashboard() {
           setInviteFile({
             name: file.name,
             size: "720 KB",
-            status: "Reviewing"
+            status: "Uploaded"
           });
+
+          // Update document upload flag in Supabase
+          if (clientRecord) {
+            fetch("/api/clients", {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+              },
+              body: JSON.stringify({ id: clientRecord.id, inviteStatus: "Uploaded" }),
+            }).catch((err) => console.error("Error updating invite status:", err));
+          }
           return 100;
         }
         return prev + 20;
@@ -187,9 +262,9 @@ export default function ClientDashboard() {
         {/* Welcome VIP client header */}
         <div className="bg-white dark:bg-slate-900 p-6 rounded-2xl border border-brand-navy/5 dark:border-slate-850 shadow-sm dark:shadow-none flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
           <div>
-            <h1 className="text-2xl font-black text-brand-navy dark:text-slate-100 tracking-tight">Bonjour, John Doe</h1>
+            <h1 className="text-2xl font-black text-brand-navy dark:text-slate-100 tracking-tight">Bonjour, {clientRecord?.name || "John Doe"}</h1>
             <p className="text-sm text-text-muted dark:text-slate-400 mt-1 font-medium">
-              Consular Reference: <span className="text-brand-gold font-bold">BTA-784-KGL</span>
+              Consular Reference: <span className="text-brand-gold font-bold">{clientRecord?.id || "BTA-784-KGL"}</span>
             </p>
           </div>
           <div className="flex items-center gap-2 bg-brand-gold/10 px-3.5 py-1.5 rounded-full text-xs font-bold text-brand-navy dark:text-slate-100 border border-brand-gold/20">
