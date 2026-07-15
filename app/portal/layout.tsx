@@ -23,7 +23,8 @@ import {
   X,
   CreditCard,
   Sun,
-  Moon
+  Moon,
+  Building
 } from "lucide-react";
 
 export default function PortalLayout({ children }: { children: React.ReactNode }) {
@@ -120,8 +121,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     ],
     admin: [
       { name: "Client Pipelines", path: "/portal/admin", icon: Users },
-      { name: "Verify Documents", path: "/portal/admin#documents", icon: Shield },
-      { name: "Publish Packages", path: "/portal/admin#packages", icon: PlaneTakeoff }
+      { name: "Consular Partner Gateway", path: "/portal/admin#partnerships", icon: Building }
     ],
     superadmin: [
       { name: "Command Center", path: "/portal/superadmin", icon: Database },
@@ -183,41 +183,8 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
             </nav>
           </div>
 
-          {/* Quick Role Switcher widget in sidebar */}
-          <div className="pt-6 border-t border-white/10">
-            <div className="px-2 text-[10px] uppercase font-bold tracking-widest text-brand-gold/60 mb-3">
-              Role Simulator
-            </div>
-            <div className="space-y-1 bg-white/5 p-2 rounded-xl">
-              <button
-                onClick={() => handleRoleSwitch("client")}
-                className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-bold transition-all flex items-center justify-between ${
-                  activeRole === "client" ? "text-brand-gold bg-white/5" : "text-white/60 hover:text-white"
-                }`}
-              >
-                Client Account
-                {activeRole === "client" && <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />}
-              </button>
-              <button
-                onClick={() => handleRoleSwitch("admin")}
-                className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-bold transition-all flex items-center justify-between ${
-                  activeRole === "admin" ? "text-brand-gold bg-white/5" : "text-white/60 hover:text-white"
-                }`}
-              >
-                Agent / Admin
-                {activeRole === "admin" && <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />}
-              </button>
-              <button
-                onClick={() => handleRoleSwitch("superadmin")}
-                className={`w-full text-left px-2.5 py-1.5 rounded text-xs font-bold transition-all flex items-center justify-between ${
-                  activeRole === "superadmin" ? "text-brand-gold bg-white/5" : "text-white/60 hover:text-white"
-                }`}
-              >
-                Superadmin
-                {activeRole === "superadmin" && <span className="w-1.5 h-1.5 rounded-full bg-brand-gold" />}
-              </button>
-            </div>
-          </div>
+          {/* Spacer to push content */}
+          <div className="flex-1" />
         </div>
       </div>
 

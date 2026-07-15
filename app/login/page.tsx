@@ -26,7 +26,6 @@ export default function Login() {
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("client"); // client, admin, superadmin
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   
@@ -113,7 +112,7 @@ export default function Login() {
       } else {
         setOtpError("Invalid verification code. Please try again (Hint: check test bypass code).");
       }
-    }, 1000);
+    }, 100);
   };
 
   return (
@@ -190,7 +189,7 @@ export default function Login() {
               <div className="text-center md:text-left mb-8">
                 <h1 className="text-3xl font-extrabold tracking-tight text-brand-navy dark:text-slate-100">Portal Sign In</h1>
                 <p className="text-sm text-text-muted dark:text-slate-400 mt-2">
-                  Select your role profile to access the personalized dashboard.
+                  Enter your credentials to access your secure portal.
                 </p>
               </div>
 
@@ -248,22 +247,6 @@ export default function Login() {
                       {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
-                </div>
-
-                {/* Role Profile Selector (For demonstration) */}
-                <div className="flex flex-col">
-                  <label className="text-xs font-bold text-brand-navy dark:text-slate-100/60 uppercase tracking-widest mb-1.5">
-                    Role Profile Simulator
-                  </label>
-                  <select
-                    value={role}
-                    onChange={(e) => setRole(e.target.value)}
-                    className="w-full bg-brand-gray-light dark:bg-slate-850 border border-brand-gold rounded-lg px-4 py-2.5 text-sm text-brand-navy dark:text-slate-100 font-bold focus:outline-none transition-colors shadow-sm dark:shadow-none cursor-pointer"
-                  >
-                    <option value="client">Client Portal Profile</option>
-                    <option value="admin">Blessed Agent/Admin Portal</option>
-                    <option value="superadmin">Superadmin Console Panel</option>
-                  </select>
                 </div>
 
                 {/* Submit Button with Airplane take-off */}

@@ -14,9 +14,14 @@
   --color-brand-gray-light: #f8fafc;
   --color-text-dark: #1e293b;
   --color-text-muted: #64748b;
+  --color-slate-850: #1b2537;
   
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+}
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {

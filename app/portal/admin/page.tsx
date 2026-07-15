@@ -74,6 +74,22 @@ export default function AdminDashboard() {
     loadData();
   }, []);
 
+  // Synchronise active tab with URL hash navigation
+  useEffect(() => {
+    const handleHashChange = () => {
+      if (typeof window !== "undefined") {
+        if (window.location.hash === "#partnerships") {
+          setActiveTab("partnerships");
+        } else {
+          setActiveTab("pipeline");
+        }
+      }
+    };
+    handleHashChange();
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, []);
+
   const handleDispatch = async (e: React.FormEvent) => {
     e.preventDefault();
     const matchedClient = simulatedClients.find(c => c.id === formClient);

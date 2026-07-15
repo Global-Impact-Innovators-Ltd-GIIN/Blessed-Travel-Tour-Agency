@@ -276,22 +276,6 @@ export default function ClientDashboard() {
         {/* PROGRESS TRACKER CANVAS */}
         <div className="bg-white dark:bg-slate-900 p-6 md:p-8 rounded-3xl border border-brand-navy/15 dark:border-slate-800 shadow-sm dark:shadow-none relative">
           
-          {/* Tracker controls for simulation */}
-          <div className="absolute top-6 right-6 flex items-center gap-3">
-            <span className="text-[10px] uppercase font-bold tracking-widest text-brand-gold/80 hidden sm:inline">
-              Simulation Console
-            </span>
-            <button
-              onClick={() => {
-                setCurrentStepId((prev) => (prev >= 4 ? 1 : prev + 1));
-                setActivePopover(null);
-              }}
-              className="inline-flex items-center gap-1.5 text-xs font-bold bg-brand-navy hover:bg-brand-blue-dark text-white px-3 py-1.5 rounded-lg transition-colors cursor-pointer"
-            >
-              <RefreshCw className="w-3.5 h-3.5" />
-              Next Stage
-            </button>
-          </div>
 
           <h3 className="font-extrabold text-lg tracking-tight mb-8">Consular Protocol Timeline</h3>
 
