@@ -15,6 +15,9 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Blessed Travel & Tour Agency",
   description: "Consular VIP protocol and luxury safaris concierge based in Kigali, Rwanda.",
+  icons: {
+    icon: "/logo.png",
+  },
 };
 
 export const dynamic = "force-dynamic";
